@@ -21,18 +21,12 @@ func getDataAdmin(c echo.Context) error {
 		Password: a.Password,
 	}
 
-	admins := Admin.GetAdmins()
-	adminSelected := entities.Admin{}
-	for _, val := range admins {
-		decryptPass := encryption_decryption.DoDecryption(val.Password)
-		if admin.Password == decryptPass && admin.Username == val.Username {
-			adminSelected.Name = val.Name
-			adminSelected.Id = val.Id
-			adminSelected.Username = val.Username
-			adminSelected.Password = decryptPass
-			adminSelected.Photo = val.Photo
-			adminSelected.Status = val.Status
-			break
+	admins := Admin.GetAdmins(admin.Password)
+	var emptyAdmin entities.Admin
+	if admins != (emptyAdmin) {
+		decryptPass := encryption_decryption.CheckPasswordHash(admins.Password, admin.Password)
+		if decryptPass != true {
+			return c.String(http.StatusUnauthorized, "Wrong Username / Password")
 		}
 	}
 

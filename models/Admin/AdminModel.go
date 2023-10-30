@@ -5,8 +5,8 @@ import (
 	"backend_jamijabal/entities"
 )
 
-func GetAdmins() []entities.Admin {
-	res, err := config.DB.Query(`
+func GetAdmins(username string) entities.Admin {
+	res := config.DB.QueryRow(`
 				SELECT 
 				    admin.id,
 				    admin.name,
@@ -17,32 +17,22 @@ func GetAdmins() []entities.Admin {
 					admin.status
 				FROM admin
 				JOIN mst_role_admin ON admin.role_admin_id = mst_role_admin.id
-			`)
+				WHERE admin.username = ?
+			`, username)
 
-	if err != nil {
-		panic(err)
+	var admin entities.Admin
+	if err := res.Scan(
+		&admin.Id,
+		&admin.Name,
+		&admin.Username,
+		&admin.Password,
+		&admin.RoleAdmin.Name,
+		&admin.Photo,
+		&admin.Status,
+	); err != nil {
+		panic(err.Error())
 	}
-	var admins []entities.Admin
-
-	defer res.Close()
-	for res.Next() {
-		var admin entities.Admin
-		if err := res.Scan(
-			&admin.Id,
-			&admin.Name,
-			&admin.Username,
-			&admin.Password,
-			&admin.RoleAdmin.Name,
-			&admin.Photo,
-			&admin.Status,
-		); err != nil {
-			panic(err.Error())
-		}
-
-		admins = append(admins, admin)
-	}
-
-	return admins
+	return admin
 }
 
 func postAdmin(admin entities.Admin) bool {
